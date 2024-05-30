@@ -1,5 +1,12 @@
 let youtubeTimer = 0;
-const youtubeLimit = 60; // Set your limit in seconds (e.g., 3600 seconds = 1 hour)
+let youtubeLimit = 3600; // Default limit in seconds (e.g., 3600 seconds = 1 hour)
+
+// Load the youtubeLimit from storage
+chrome.storage.local.get(['youtubeLimit'], (result) => {
+  if (result.youtubeLimit) {
+    youtubeLimit = result.youtubeLimit;
+  }
+});
 
 function checkYouTubeUsage() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -20,6 +27,20 @@ function checkYouTubeUsage() {
     }
   });
 }
+
+// Listen for messages from the content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "resetTimer") {
+    youtubeLimit = request.newLimit;
+    youtubeTimer = 0;
+  } else if (request.action === "closeTab") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.remove(tabs[0].id);
+    });
+  }
+  sendResponse({});
+});
+
 
 // Check YouTube usage every second
 setInterval(checkYouTubeUsage, 1000);
