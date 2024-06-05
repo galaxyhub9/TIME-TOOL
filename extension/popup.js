@@ -15,13 +15,31 @@ document.getElementById('productiveNo').addEventListener('click', () => {
   window.close();
 });
 
-
 function updateTimeRemaining() {
   chrome.storage.local.get(['timerMinutes', 'startTime'], (result) => {
     const currentTime = Date.now();
-    const elapsedTime = (currentTime - result.startTime) / 60000; // Convert ms to minutes
-    const remainingTime = result.timerMinutes - elapsedTime;
-    document.getElementById('timeRemaining').textContent = `${Math.max(remainingTime.toFixed(2), 0)} minutes`;
+    const elapsedTime = (currentTime - result.startTime) / 1000; // Convert ms to seconds
+    let remainingSeconds = result.timerMinutes * 60 - elapsedTime;
+
+    // If the timer has not been set or elapsed time exceeds the specified duration, set remaining seconds to 0
+    if (result.timerMinutes === undefined || elapsedTime >= result.timerMinutes * 60) {
+      remainingSeconds = 0;
+    }
+
+    // Calculate hours, minutes, and seconds
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = Math.floor(remainingSeconds % 60);
+
+    // Format the time string
+    let timeString = '';
+    if (result.timerMinutes !== undefined) {
+      timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      timeString = '00:00:00';
+    }
+    
+    document.getElementById('timeRemaining').textContent = timeString;
   });
 }
 
