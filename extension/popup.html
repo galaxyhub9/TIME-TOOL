@@ -1,17 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>YouTube Productivity Helper</title>
+  <title>YouTube Productivity Monitor</title>
   <style>
-    body { font-family: Arial, sans-serif; }
-    button { margin: 5px; padding: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>YouTube Productivity Helper</h1>
-  <p>Manage your YouTube usage to stay productive.</p>
-  <button id="resetTimerButton">Reset Timer</button>
+  <h1>Are you doing something productive?</h1>
+  <button id="productiveYes">Yes</button>
+  <button id="productiveNo">No</button>
+  <h1>Time Remaining</h1>
+  <div id="timeRemaining">Loading...</div>
+  <script src="timer.js"></script>
   <script src="popup.js"></script>
+
+
 </body>
 </html>
-

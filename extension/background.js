@@ -1,46 +1,104 @@
-let youtubeTimer = 0;
-let youtubeLimit = 3600; // Default limit in seconds (e.g., 3600 seconds = 1 hour)
+let youtubeTabId = null;
+let timerMinutes = 0;
+let timerSet = false;
 
-// Load the youtubeLimit from storage
-chrome.storage.local.get(['youtubeLimit'], (result) => {
-  if (result.youtubeLimit) {
-    youtubeLimit = result.youtubeLimit;
-  }
-});
+// Function to start the timer
+function startTimer(minutes) {
+  chrome.alarms.clearAll(() => {
+    chrome.alarms.create('youtubeTimer', { delayInMinutes: minutes });
+    timerMinutes = minutes;
+    timerSet = true;
+    chrome.storage.local.set({ timerMinutes: minutes, startTime: Date.now() });
+  });
+}
 
-function checkYouTubeUsage() {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs.length === 0) return;
+// Function to show the popup
+function showPopUp() {
+  chrome.scripting.executeScript({
+    target: { tabId: youtubeTabId },
+    function: () => {
+      const popUpDiv = document.createElement('div');
+      popUpDiv.style.position = 'fixed';
+      popUpDiv.style.top = '0';
+      popUpDiv.style.left = '0';
+      popUpDiv.style.width = '100%';
+      popUpDiv.style.height = '100%';
+      popUpDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      popUpDiv.style.color = 'white';
+      popUpDiv.style.zIndex = '10000';
+      popUpDiv.style.display = 'flex';
+      popUpDiv.style.flexDirection = 'column';
+      popUpDiv.style.justifyContent = 'center';
+      popUpDiv.style.alignItems = 'center';
+      popUpDiv.innerHTML = `
+        <div style="text-align: center;">
+          <h1>Are you doing something productive?</h1>
+          <button id="productiveYes" style="margin: 10px; padding: 10px;">Yes</button>
+          <button id="productiveNo" style="margin: 10px; padding: 10px;">No</button>
+        </div>
+      `;
 
-    const activeTab = tabs[0];
-    if (activeTab.url.includes("youtube.com/watch")) {
-      youtubeTimer++;
-      
-      if (youtubeTimer >= youtubeLimit) {
-        chrome.scripting.executeScript({
-          target: { tabId: activeTab.id },
-          files: ["content.js"]
-        });
-      }
-    } else {
-      youtubeTimer = 0; // Reset the timer if not on YouTube
+      document.body.appendChild(popUpDiv);
+
+      document.getElementById('productiveYes').addEventListener('click', () => {
+        const userMinutes = prompt("Enter how many more minutes you need:");
+        if (userMinutes && !isNaN(userMinutes) && userMinutes > 0) {
+          chrome.runtime.sendMessage({ action: "resetTimer", newLimit: userMinutes * 60 });
+          alert(`You have ${userMinutes} more minutes.`);
+          popUpDiv.remove();
+        } else {
+          alert("Please enter a valid number of minutes.");
+        }
+      });
+
+      document.getElementById('productiveNo').addEventListener('click', () => {
+        alert("Closing YouTube to help you stay productive!");
+        chrome.runtime.sendMessage({ action: "closeTab" });
+        popUpDiv.remove();
+      });
     }
   });
 }
 
-// Listen for messages from the content script
+// Listen for alarm events
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'youtubeTimer') {
+    showPopUp();
+  }
+});
+
+// Listen for messages
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "resetTimer") {
-    youtubeLimit = request.newLimit;
-    youtubeTimer = 0;
+    startTimer(request.newLimit / 60); // Convert seconds to minutes
   } else if (request.action === "closeTab") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      chrome.tabs.remove(tabs[0].id);
-    });
+    if (youtubeTabId !== null) {
+      chrome.tabs.remove(youtubeTabId);
+      youtubeTabId = null;
+      timerSet = false;
+    }
   }
   sendResponse({});
 });
 
+// Monitor tab updates and activations
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url.includes("youtube.com")) {
+    if (!timerSet) {
+      youtubeTabId = tab.id;
+      showPopUp();
+    } else {
+      youtubeTabId = tab.id;
+    }
+  }
+});
 
-// Check YouTube usage every second
-setInterval(checkYouTubeUsage, 1000);
+chrome.tabs.onActivated.addListener(activeInfo => {
+  chrome.tabs.get(activeInfo.tabId, tab => {
+    if (tab.url && tab.url.includes("youtube.com")) {
+      youtubeTabId = tab.id;
+    } else {
+      youtubeTabId = null;
+    }
+  });
+});
