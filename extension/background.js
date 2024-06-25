@@ -1,6 +1,12 @@
 let youtubeTabId = null;
 let timerInterval = null;
 let timerSet = false;
+let countdownInterval = null; 
+let countdownRunning = false;
+
+
+const API_KEY = 'AIzaSyCZydCzaWHe6WIhwCsYCkU3N2rXt77r84E';  // Replace with your YouTube API key
+const unproductiveKeywords = ['funny', 'music', 'entertainment', 'comedy', 'vlog', 'game'];
 
 // Function to start the timer
 function startTimer(minutes) {
@@ -16,6 +22,7 @@ function startTimer(minutes) {
 function startInterval() {
   timerInterval = setInterval(() => {
     checkTimer();
+    checkContent();
   }, 1000); // Check every second
 }
 
@@ -35,6 +42,51 @@ function checkTimer() {
       stopInterval();
     }
   });
+}
+
+// Function to check the content of the current YouTube video
+function checkContent() {
+  if (youtubeTabId !== null && !countdownRunning) {
+    chrome.scripting.executeScript({
+      target: { tabId: youtubeTabId },
+      function: () => document.location.href,
+    }, (results) => {
+      if (results && results[0] && results[0].result.includes('watch')) {
+        const url = new URL(results[0].result);
+        const videoId = url.searchParams.get('v');
+        fetchVideoDetails(videoId);
+      }
+    });
+  }
+}
+
+// Function to fetch video details using YouTube API
+function fetchVideoDetails(videoId) {
+  console.log(`Fetching details for video ID: ${videoId}`);
+  fetch(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${API_KEY}&part=snippet`)
+    .then(response => response.json())
+    .then(data => {
+      console.log('Video data fetched:', data);
+      if (data.items && data.items.length > 0) {
+        const video = data.items[0];
+        const title = video.snippet.title.toLowerCase();
+        const description = video.snippet.description.toLowerCase();
+        const category = video.snippet.categoryId; // Use category if needed
+
+        // Check for unproductive keywords
+        const isUnproductive = unproductiveKeywords.some(keyword => 
+          title.includes(keyword) || description.includes(keyword)
+        );
+
+        if (isUnproductive) {
+          console.log('Unproductive content detected, starting countdown.');
+          startCountdownAndCloseTab();
+        } else {
+          console.log('Productive content detected, no action taken.');
+        }
+      }
+    })
+    .catch(error => console.error('Error fetching video details:', error));
 }
 
 // Function to show the popup
@@ -88,6 +140,68 @@ function showPopUp() {
       }
     });
   }
+}
+
+// Function to start countdown and close the tab
+function startCountdownAndCloseTab() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+  }
+  countdownRunning = true;
+  let countdown = 3;
+  
+  countdownInterval = setInterval(() => {
+    console.log("hey" + countdown);
+    if (youtubeTabId !== null) {
+      chrome.scripting.executeScript({
+        target: { tabId: youtubeTabId },
+        function: (countdown) => {          
+          const countdownDiv = document.getElementById('countdownDiv');
+          if (!countdownDiv) {
+            const div = document.createElement('div');
+            div.id = 'countdownDiv';
+            div.style.position = 'fixed';
+            div.style.top = '0';
+            div.style.left = '0';
+            div.style.width = '100%';
+            div.style.height = '100%';
+            div.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            div.style.color = 'white';
+            div.style.zIndex = '10000';
+            div.style.display = 'flex';
+            div.style.flexDirection = 'column';
+            div.style.justifyContent = 'center';
+            div.style.alignItems = 'center';
+            div.style.fontSize = '48px';
+            document.body.appendChild(div);
+
+            const text = document.createElement('div');
+            text.id = 'countdownText';
+            text.textContent = countdown;
+            div.appendChild(text);
+          } else {
+            const text = document.getElementById('countdownText');
+            text.textContent = countdown;
+          }
+        },
+        args: [countdown]
+      });
+    }
+    
+    countdown -= 1;    
+    console.log("decreased by 1");
+    
+    if (countdown < 0) {
+      clearInterval(countdownInterval);
+      countdownRunning= false;
+      if (youtubeTabId !== null) {
+        chrome.tabs.remove(youtubeTabId);
+        youtubeTabId = null;
+        timerSet = false;
+        stopInterval();
+      }
+    }
+  }, 1000);
 }
 
 // Listen for alarm events

@@ -1,3 +1,39 @@
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message.action === "updateCountdown") {
+//     let countdownDiv = document.getElementById('countdownDiv');
+//     if (!countdownDiv) {
+//       countdownDiv = document.createElement('div');
+//       countdownDiv.id = 'countdownDiv';
+//       countdownDiv.style.position = 'fixed';
+//       countdownDiv.style.top = '0';
+//       countdownDiv.style.left = '0';
+//       countdownDiv.style.width = '100%';
+//       countdownDiv.style.height = '100%';
+//       countdownDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+//       countdownDiv.style.color = 'white';
+//       countdownDiv.style.zIndex = '10000';
+//       countdownDiv.style.display = 'flex';
+//       countdownDiv.style.flexDirection = 'column';
+//       countdownDiv.style.justifyContent = 'center';
+//       countdownDiv.style.alignItems = 'center';
+//       countdownDiv.style.fontSize = '48px';
+//       document.body.appendChild(countdownDiv);
+
+//       const countdownText = document.createElement('div');
+//       countdownText.id = 'countdownText';
+//       countdownDiv.appendChild(countdownText);
+//     }
+
+//     const countdownText = document.getElementById('countdownText');
+//     countdownText.textContent = message.countdown;
+//   }
+// });
+
+
+
+
+
+
 // function showPopUp() {
 //   const popUpDiv = document.createElement('div');
 //   popUpDiv.style.position = 'fixed';
