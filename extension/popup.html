@@ -1,28 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YouTube Productivity Monitor</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    button {
-      margin: 10px;
-      padding: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>Are you doing something productive?</h1>
-  <button id="productiveYes">Yes</button>
-  <button id="productiveNo">No</button>
-  <h1>Time Remaining</h1>
-  <div id="timeRemaining">Loading...</div>
+  <div class="container">
+    <div class="header">
+      <h1>YOUTUBE MONITOR</h1>
+    </div>
+    <div class="content">
+      <h2>Are you doing something productive?</h2>
+      <button id="productiveYes" class="button yes">Yes</button>
+      <button id="productiveNo" class="button no">No</button>
+
+      <h2>Time Remaining</h2>
+      <div id="timeRemaining" class="time-remaining">Loading...</div>
+
+      <div class="options-section">
+        <h2>Extension Options</h2>
+        <div class="option">
+          <h3>Unproductive Keywords</h3>
+          <input type="text" id="newKeyword" placeholder="Add new keyword" class="input-field" />
+          <button id="addKeywordBtn" class="button add">Add</button>
+          <ul id="keywordsList" class="list"></ul>
+        </div>
+        <div class="option">
+          <h3>Unproductive Channels</h3>
+          <input type="text" id="newChannel" placeholder="Add new channel" class="input-field" />
+          <button id="addChannelBtn" class="button add">Add</button>
+          <ul id="channelsList" class="list"></ul>
+        </div>
+        <div class="option">
+          <h3>Shorts Limit</h3>
+          <input type="number" id="shortsLimit" placeholder="Number of shorts" value="5" class="input-field" />
+          <button id="setShortsLimitBtn" class="button set-limit">Set Limit</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="popup.js"></script>
-
-
-  
+  <script src="options.js"></script>
 </body>
 </html>
